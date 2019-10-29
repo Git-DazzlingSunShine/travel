@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>路线详情</title>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/route-detail.css">
+
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/include.js"></script>
+    <script type="text/javascript" src="js/route_detail.js"></script>
+    <script type="text/javascript" src="js/getParameter.js"></script>
+    <script>
+        var favoriteCount = 0;
+        var logined = false;//记录登录状态
+        function validFavorite() {
+            $.post({
+                url: "route?action=queryFavoriteStatus",
+                data: {rid: getParameter("rid")},
+                dataType: "json",
+                success: function (result) {
+                    if (result.isFavored) {
+                        //未登录
+                        $("#favoriteenable").hide();
+                        logined = false;
+                    } else {
+                        //登录后
+                        $("#favoritedisable").hide();
+                        logined = true;
+                    }
+                }
+            })
+        }
+
+        //提交收藏
+        function favoriteRoute() {
+            if (logined) {
+                $.post({
+                    url: "route?action=favorite",
+                    data: {rid: getParameter("rid")},
+                    success: function (result) {
+                        //收藏成功后：1、收藏次数+1；2、收藏禁点显示 3、点击按钮隐藏
+                        if (result.code == 0) {
+                            favoriteCount++;
+                            $("#favoriteCount").text("已收藏" + favoriteCount + "次");
+                            $("#favoriteenable").hide();
+                            $("#favoritedisable").show();
+                        } else {
+                            location.href = "login.html";
+                        }
+                    }
+                });
+            } else {
+                location.href = "login.html";
+            }
+        }
+
+
+        $(function () {
+            $.post({
+                url: "user?action=queryCurrentUser",
+                dataType: "json",
+                success: function (result) {
+                    //若果code为0,代表已登录，不等于0，代表未登录
+                    if (result.code != 0) {
+                        // 允许点击，但是点击之后，进入到登录页面
+                        $("#favoritedisable").hide();
+                        logined = false;
+                    } else {
+                        //登录后要进一步判断
+                        validFavorite();
+                        logined = true;
+                    }
+                }
+            });
+
+            var rid = getParameter("rid");
+            $.post({
+                url: "route?action=detail",
+                data: {rid: rid},
+                dataType: "json",
+                success: function (result) {
+                    favoriteCount = result.detail.route.count;
+                    $("#category_desc").text(result.detail.category.cname);
+                    $("#route_summary").text(result.detail.route.rname);
+                    $(".pros_title").text(result.detail.route.rname);
+                    $(".hot").text(result.detail.route.routeIntroduce);
+                    $(".pros_other").eq(0).text("经营商家：" + result.detail.seller.sname);
+                    $(".pros_other").eq(1).text("咨询电话：" + result.detail.seller.consphone);
+                    $(".pros_other").eq(2).text("地址：" + result.detail.seller.address);
+                    $("#price").text("￥" + result.detail.route.price + "起");
+                    $("#favoriteCount").text("已收藏" + result.detail.route.count + "次");
+                    $(`<img alt="" class="big_img" src=${result.detail.route.rimage}>`).appendTo($("#big_img"));
+
+                    //imgList
+                    for (common of result.detail.routeImg) {
+                        var content = `<a title="" class="little_img" bigPic="${common.bigPic}"><img src="${common.smallPic}" ></a>`;
+                        $(content).insertBefore($("#nextImg"));
+                    }
+                    focus_img();
+                }
+            })
+        })
+    </script>
+</head>
+
+<body>
+<!--引入头部-->
+<div id="header"></div>
+<!-- 详情 start -->
+<div class="wrap">
+    <div class="bread_box">
+        <a href="/">首页</a>
+        <span> &gt;</span>
+        <a id="category_desc" href="#">国内游</a><span> &gt;</span>
+        <a id="route_summary" href="#">全国-曼谷6-7天自由行 泰国出境旅游 特价往返机票自由行二次确认</a>
+    </div>
+    <div class="prosum_box">
+        <dl class="prosum_left">
+            <dt id="big_img">
+
+            </dt>
+            <dd>
+                <a class="up_img up_img_disable"></a>
+
+                <a class="down_img down_img_disable" style="margin-bottom: 0;" id="nextImg"></a>
+            </dd>
+        </dl>
+        <div class="prosum_right">
+            <p class="pros_title">【尾单特卖】全国-曼谷6-7天自由行 泰国出境旅游 特价往返机票自由行二次确认</p>
+            <p class="hot">1-2月出发，网付立享￥1099/2人起！爆款位置有限，抢完即止！</p>
+            <div class="pros_other">
+                <p>经营商家 ：黑马国旅</p>
+                <p>咨询电话 : 400-618-9090</p>
+                <p>地址 ： 传智播客黑马程序员</p>
+            </div>
+            <div class="pros_price">
+                <p class="price"><strong id="price">¥2699.00</strong><span>起</span></p>
+                <p class="collect">
+                    <a id="favoriteenable" class="btn" onclick="favoriteRoute()"><i
+                            class="glyphicon glyphicon-heart-empty"></i>点击收藏</a>
+                    <a id="favoritedisable" class="btn already" disabled="disabled"><i
+                            class="glyphicon glyphicon-heart-empty"></i>点击收藏</a>
+
+                    <span id="favoriteCount">已收藏100次</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="you_need_konw">
+        <span>旅游须知</span>
+        <div class="notice">
+            <p>1、旅行社已投保旅行社责任险。建议游客购买旅游意外保险 <br>
+
+            <p>
+                2、旅游者参加打猎、潜水、海边游泳、漂流、滑水、滑雪、滑草、蹦极、跳伞、滑翔、乘热气球、骑马、赛车、攀岩、水疗、水上飞机等属于高风险性游乐项目的，敬请旅游者务必在参加前充分了解项目的安全须知并确保身体状况能适应此类活动；如旅游者不具备较好的身体条件及技能，可能会造成身体伤害。</p>
+
+            <p>
+                3、参加出海活动时，请务必穿着救生设备。参加水上活动应注意自己的身体状况，有心脏病、冠心病、高血压、感冒、发烧和饮酒及餐后不可以参加水上活动及潜水。在海里活动时，严禁触摸海洋中各种鱼类，水母，海胆，珊瑚等海洋生物，避免被其蛰伤。老人和小孩必须有成年人陪同才能参加合适的水上活动。在海边游玩时，注意保管好随身携带的贵重物品。</p>
+
+            <p>4、根据中国海关总署的规定，旅客在境外购买的物品，在进入中国海关时可能需要征收关税。详细内容见《中华人民共和国海关总署公告2010年第54号文件》。</p>
+
+            <p>5、建议出发时行李托运，贵重物品、常用物品、常用药品、御寒衣物等请随身携带，尽量不要托运。行李延误属于不可抗力因素，我司将全力协助客人跟进后续工作，但我司对此不承担任何责任。</p>
+            <p>1、旅行社已投保旅行社责任险。建议游客购买旅游意外保险 <br>
+
+            <p>
+                2、旅游者参加打猎、潜水、海边游泳、漂流、滑水、滑雪、滑草、蹦极、跳伞、滑翔、乘热气球、骑马、赛车、攀岩、水疗、水上飞机等属于高风险性游乐项目的，敬请旅游者务必在参加前充分了解项目的安全须知并确保身体状况能适应此类活动；如旅游者不具备较好的身体条件及技能，可能会造成身体伤害。</p>
+
+            <p>
+                3、参加出海活动时，请务必穿着救生设备。参加水上活动应注意自己的身体状况，有心脏病、冠心病、高血压、感冒、发烧和饮酒及餐后不可以参加水上活动及潜水。在海里活动时，严禁触摸海洋中各种鱼类，水母，海胆，珊瑚等海洋生物，避免被其蛰伤。老人和小孩必须有成年人陪同才能参加合适的水上活动。在海边游玩时，注意保管好随身携带的贵重物品。</p>
+
+            <p>4、根据中国海关总署的规定，旅客在境外购买的物品，在进入中国海关时可能需要征收关税。详细内容见《中华人民共和国海关总署公告2010年第54号文件》。</p>
+
+            <p>5、建议出发时行李托运，贵重物品、常用物品、常用药品、御寒衣物等请随身携带，尽量不要托运。行李延误属于不可抗力因素，我司将全力协助客人跟进后续工作，但我司对此不承担任何责任。</p>
+        </div>
+    </div>
+</div>
+<!-- 详情 end -->
+
+<!--引入头部-->
+<div id="footer"></div>
+</body>
+
+</html>

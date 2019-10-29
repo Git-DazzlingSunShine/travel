@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>注册</title>
+
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/register.css">
+
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="js/jquery.serializejson.min.js"></script>
+    <script type="text/javascript" src="js/md5.js"></script>
+    <script type="text/javascript" src="js/include.js"></script>
+    <script type="text/javascript" src="js/captchaimg.js"></script>
+    <script>
+        $(function () {
+            //自定义邮箱校验规则
+            $.validator.addMethod("mebile", function (value, element, param) {
+                if (param) {
+                    var regExp = /^1[3-9][0-9]{9}$/;
+                    return regExp.test(value);
+                }
+            });
+
+            $("#registerForm").validate({
+                rules: {
+                    username: {
+                        required: true
+                    },
+                    password: {
+                        required: true,
+                        rangelength: [6, 12]
+                    },
+                    realname: {
+                        required: true
+                    },
+                    email: {
+                        required: true,
+                        email: true,
+                        remote: "user?action=checkEmail"
+                    },
+                    mobile: {
+                        required: true,
+                        mebile: true
+                    },
+                    captcha: {
+                        required: true
+                    }
+                },
+                //错误信息
+                messages: {
+                    username: {
+                        required: "用户名非空"
+                    },
+                    password: {
+                        required: "密码非空",
+                        rangelength: "密码长度在6-12位"
+                    },
+                    realname: {
+                        required: "真实姓名非空"
+                    },
+                    email: {
+                        required: "邮箱非空",
+                        email: "邮箱格式不正确",
+                        remote: "该邮箱已被注册！"
+                    },
+                    mobile: {
+                        required: "手机号码非空",
+                        mebile: "手机号码格式错误"
+                    },
+                    captcha: {
+                        required: "请输入验证码"
+                    }
+                },
+                submitHandler: function (form) {
+                    // 将表单当中的数据，封装成json对象
+                    var formJson = $(form).serializeJSON();
+                    // 因为需要把json对象传给服务器，那么在传输之前，需要先把加密做好
+                    formJson.password = md5(formJson.password);
+
+                    $.post({
+                        url: "user",
+                        data: formJson,
+                        dataType: "json",
+                        success: function (result) {
+                            console.log(result);
+                            if (result.code == 0) {
+                                location.href = "register_ok.html";
+                            } else {
+                                $("#msg").text(result.msg);
+                                $("#captcha_img").click();
+                            }
+                        }
+                    })
+
+                }
+
+            });
+        })
+    </script>
+</head>
+
+<body>
+<!--引入头部-->
+<div id="header"></div>
+<!-- 头部 end -->
+<div class="rg_layout">
+    <div class="rg_form clearfix">
+        <div class="rg_form_left">
+            <p>新用户注册</p>
+            <p>USER REGISTER</p>
+        </div>
+
+        <div class="rg_form_center">
+            <!--注册表单-->
+            <form id="registerForm" action="javascript:;">
+                <!--提交处理请求的标识符-->
+                <input type="hidden" name="action" value="register">
+                <table style="margin-top: 25px;">
+                    <tr>
+                        <td class="td_left">
+                            <label for="username">用户名</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="username" name="username" placeholder="请输入账号">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="password">密码</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="password" id="password" name="password" placeholder="请输入密码">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="email">Email</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="email" name="email" placeholder="请输入Email">
+                            <label id="email-error" class="error" for="email"></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="realname">姓名</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="realname" name="realname" placeholder="请输入真实姓名">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="mobile">手机号</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="text" id="mobile" name="mobile" placeholder="请输入您的手机号">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="gender">性别</label>
+                        </td>
+                        <td class="td_right gender">
+                            <input type="radio" id="gender" name="gender" value="m" checked> 男
+                            <input type="radio" name="gender" value="f"> 女
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="birthday">出生日期</label>
+                        </td>
+                        <td class="td_right">
+                            <input type="date" id="birthday" name="birthday" placeholder="年/月/日">
+                            <label id="birthday-error" class="error" for="birthday"></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                            <label for="captcha">验证码</label>
+                        </td>
+                        <td class="td_right check">
+                            <input type="text" id="captcha" name="captcha" class="check">
+                            <img src="captcha_img" onclick="changeCaptcha(this)">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="td_left">
+                        </td>
+                        <td class="td_right check">
+                            <input type="submit" class="submit" value="注册"><br>
+                            <span id="msg" style="color: red;"></span>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        <div class="rg_form_right">
+            <p>
+                已有账号？
+                <a href="#">立即登录</a>
+            </p>
+        </div>
+    </div>
+</div>
+<!--引入尾部-->
+<div id="footer"></div>
+</body>
+
+</html>

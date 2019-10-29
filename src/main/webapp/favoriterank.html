@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>收藏排行榜</title>
+
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/ranking-list.css">
+    <style>
+        .selectColor {
+            background-color: #ffdd68;
+        }
+    </style>
+
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="js/include.js"></script>
+    <script type="text/javascript" src="js/getParameter.js"></script>
+    <script>
+
+        $(function () {
+
+            $.post({
+                url: "favorite?action=favoriteRank",
+                data: {
+                    word: getParameter("word"),
+                    currentPage: getParameter("currentPage"),
+                    priceBegin: getParameter("priceBegin"),
+                    priceEnd: getParameter("priceEnd")
+                },
+                dataType: "json",
+                success: function (result) {
+                    $(result.routePageBean.routes).each(function (index, element) {
+                        var pageBean = result.routePageBean;
+                        var rankNum = (pageBean.currentPage - 1) * pageBean.pageSize + index + 1;
+
+                        var clzz = "";
+                        if (rankNum == 1) {
+                            clzz = "one";
+                        } else if (rankNum == 2) {
+                            clzz = "two";
+                        }
+
+                        var routeContent =
+                            `<li>
+                                <span class="num ${clzz}">${rankNum}</span>
+                                <a href="route_detail.html?rid=${element.rid}"><img src="${element.rimage}" alt=""></a>
+                                <h4><a href="route_detail.html?rid=${element.rid}">${element.rname}</a></h4>
+                                <p>
+                                    <b class="price">¥<span>${element.price}</span>起</b>
+                                    <span class="shouchang">已收藏${element.count}次</span>
+                                </p>
+                            </li>`;
+                        $(routeContent).appendTo($("#favorite_list"));
+                    });
+
+                    var currentPage = result.routePageBean.currentPage;
+
+                    var priceBegin = getVariable("priceBegin");
+                    var priceEnd = getVariable("priceEnd");
+                    var word = getVariable("word");
+
+                    function getVariable(s) {
+                        if (getParameter(s)) {
+                            return getParameter(s);
+                        } else {
+                            return "";
+                        }
+                    }
+
+                    //页码
+                    var pageBegin = currentPage - 5;
+                    pageBegin = pageBegin < 1 ? 1 : pageBegin;
+
+                    var pageEnd = pageBegin + 9;
+                    pageEnd = pageEnd > result.routePageBean.pageCount ? result.routePageBean.pageCount : pageEnd;
+
+                    for (var idx = pageBegin; idx <= pageEnd; idx++) {
+                        var pageContent = `<li class="pagSelect"><a href="favoriterank.html?currentPage=${idx}&priceBegin=${priceBegin}&priceEnd=${priceEnd}&word=${word}">${idx}</a></li>`;
+                        $(pageContent).insertBefore($("#nextPage"));
+                    }
+
+                    //当前页颜色
+                    $(".pagSelect").eq(currentPage % 10 - 1).addClass("selectColor").siblings().removeClass("selectColor");
+
+                    //页码点击
+                    function changePage(element, target) {
+                        element.on("click", function () {
+                            $(this).attr("href", "favoriterank.html?currentPage=" + target + "&word=" + word + "&priceBegin=" + priceBegin + "&priceEnd=" + priceEnd);
+                        });
+                    }
+
+                    var beforePageNum = (currentPage - 1) <= 0 ? 1 : (currentPage - 1);
+                    var nextPageNum = (currentPage + 1) > result.routePageBean.pageCount ? result.routePageBean.pageCount : (currentPage + 1);
+
+                    console.log(result.routePageBean.pageCount);
+                    changePage($("#firstPage a"), 1);
+                    changePage($("#lastPage a"), result.routePageBean.pageCount);
+                    changePage($("#nextPage a"), nextPageNum);
+                    changePage($("#beforePage a"), beforePageNum);
+
+                }
+            })
+
+        })
+    </script>
+</head>
+
+<body>
+<!--引入头部-->
+<div id="header"></div>
+<div class="contant">
+    <form class="shaixuan" action="favoriterank.html" method="get">
+        <span>线路名称</span>
+        <input type="text" name="word">
+        <span>金额</span>
+        <input type="text" name="priceBegin">~<input type="text" name="priceEnd">
+        <input class="button" type="submit" value="搜索" id="selectBtn">
+    </form>
+    <div class="list clearfix" id="#favorite_list">
+        <ul id="favorite_list">
+
+        </ul>
+    </div>
+    <div class="pageNum">
+        <ul>
+            <li id="firstPage"><a href="">首页</a></li>
+            <li class="threeword" id="beforePage"><a href="#">上一页</a></li>
+
+            <li class="threeword" id="nextPage"><a href="javascript:;">下一页</a></li>
+            <li class="threeword" id="lastPage"><a href="javascript:;">末页</a></li>
+        </ul>
+    </div>
+</div>
+
+<!--导入底部-->
+<div id="footer"></div>
+</body>
+</html>

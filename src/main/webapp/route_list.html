@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>黑马旅游-搜索</title>
+
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/search.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src='js/bootstrap.min.js'></script>
+    <script type="text/javascript" src="js/include.js"></script>
+    <script type="text/javascript" src="js/getParameter.js"></script>
+    <style>
+        .selectColor {
+            background-color: yellow;
+        }
+    </style>
+    <script>
+        $(function () {
+            $.post({
+                url: "route?action=queryPageRoutes",
+                data: {currentPage: getParameter("currentPage"), cid: getParameter("cid"), word: getParameter("word")},
+                dataType: "json",
+                success: function (result) {
+                    for (commont of result.routePageBean.routes) {
+                        var routeContent = `
+                         <li>
+                            <div class="img"><img src="${commont.rimage}" alt=""></div>
+                            <div class="text1">
+                                <p>${commont.rname}</p>
+                                <br/>
+                                <p>${commont.routeIntroduce}</p>
+                            </div>
+                            <div class="price">
+                                <p class="price_num">
+                                    <span>&yen;</span>
+                                    <span>${commont.price}</span>
+                                    <span>起</span>
+                                </p>
+                                <p><a href="route_detail.html?rid=${commont.rid}">查看详情</a></p>
+                            </div>
+                        </li>
+                    `;
+                        $(routeContent).appendTo($("#route_list"));
+                    }
+
+                    $("#pageCount").text(result.routePageBean.pageCount);
+                    $("#recordCount").text(result.routePageBean.recordCount);
+
+                    //显示10页数据，使用当前页，前4后5
+                    //当前页数
+                    var currentPage = result.routePageBean.currentPage;
+                    var word = "";
+                    if (getParameter('word')) {
+                        word = getParameter('word');
+                    }
+
+                    //起始页码
+                    var begin = currentPage - 4;
+                    if (begin <= 0) {
+                        begin = 1;
+                    }
+
+                    //结束页码
+                    var end = begin + 9;
+                    if (end >= result.routePageBean.pageCount) {
+                        end = result.routePageBean.pageCount;
+                    }
+
+                    //循环遍历创建页标对象
+                    for (var idx = begin; idx <= end; ++idx) {
+                        $(`<li class="pagSelect"><a href="route_list.html?currentPage=${idx}&cid=${getParameter('cid')}&word=${word}">${idx}</a></li>`).insertBefore($("#pageEnd"));
+                    }
+
+                    //页码栏选中状态
+                    $(".pagSelect").eq(currentPage - 1).addClass("selectColor").siblings().removeClass("selectColor")
+
+                    //给上一页下一页按钮注册点击事件
+                    $("#previousPage").on("click", function () {
+                        currentPage--;
+                        if (currentPage <= 0) {
+                            currentPage = 1;
+                        }
+                        location.href = "route_list.html?currentPage=" + currentPage + "&cid=" + getParameter('cid') + "&word=" + word;
+                    });
+
+
+                    $("#nextPage").on("click", function () {
+                        currentPage++;
+                        if (currentPage > result.routePageBean.pageCount) {
+                            currentPage = result.routePageBean.pageCount;
+                        }
+                        location.href = "route_list.html?currentPage=" + currentPage + "&cid=" + getParameter('cid') + "&word=" + word;
+                    });
+
+                    $("#last").on("click", function () {
+                        location.href = "route_list.html?currentPage=" + result.routePageBean.pageCount + "&cid=" + getParameter('cid') + "&word=" + word;
+                    });
+
+                    $("#first").on("click", function () {
+                        location.href = "route_list.html?" + "&cid=" + getParameter('cid') + "&word=" + word;
+                    });
+
+
+                }
+            });
+
+            $.post({
+                url: "route?action=queryPopulate",
+                dataType: "json",
+                success: function (result) {
+
+                    for (commont of result.populate) {
+                        var populateTemplate = `
+                            <li>
+                                <div class="left"><img src="${commont.rimage}" alt=""></div>
+                                <div class="right">
+                                    <p>${commont.rname}</p>
+                                    <p>网付价<span>&yen;<span>${commont.price}</span>起</span>
+                                    </p>
+                                </div>
+                            </li>
+                            `;
+                        $(populateTemplate).appendTo($("#populate"));
+
+                    }
+
+                }
+            })
+
+        })
+    </script>
+
+</head>
+
+<body>
+<!--引入头部-->
+<div id="header"></div>
+<div class="page_one">
+    <div class="contant">
+        <div class="crumbs">
+            <img src="images/search.png" alt="">
+            <p>黑马旅行><span>搜索结果</span></p>
+        </div>
+        <div class="xinxi clearfix">
+            <div class="left">
+                <div class="header">
+                    <span>商品信息</span>
+                    <span class="jg">价格</span>
+                </div>
+                <ul id="route_list">
+                </ul>
+                <div class="page_num_inf">
+                    <i></i> 共
+                    <span id="pageCount">12</span>页<span id="recordCount">132</span>条
+                </div>
+                <div class="pageNum">
+                    <ul>
+                        <li id="first"><a href="">首页</a></li>
+                        <li class="threeword"><a href="#" id="previousPage">上一页</a></li>
+
+                        <li class="threeword" id="pageEnd"><a href="javascript:;" id="nextPage">下一页</a></li>
+                        <li class="threeword" id="last"><a href="javascript:;">末页</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="right">
+                <div class="top">
+                    <div class="hot">HOT</div>
+                    <span>热门推荐</span>
+                </div>
+                <ul id="populate">
+
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--引入头部-->
+<div id="footer"></div>
+</body>
+
+</html>

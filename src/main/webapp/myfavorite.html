@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>黑马旅游网-我的收藏</title>
+
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+    <link rel="stylesheet" type="text/css" href="css/myfavorite.css">
+    <style>
+        .selectColor {
+            background-color: yellow;
+        }
+    </style>
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="js/include.js"></script>
+    <script type="text/javascript" src="js/getParameter.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $.post({
+                url: "favorite?action=myFavorite",
+                data: {currentPage: getParameter("currentPage")},
+                dataType: "json",
+                success: function (result) {
+                    if (result.code == 0) {
+                        for (comment of result.routePageBean.routes) {
+                            var favoriteCount =
+                                `<div class="col-md-3">
+                                <a href="route_detail.html?rid=${comment.rid}">
+                                    <img src="${comment.rimage}" alt="">
+                                    <div class="has_border">
+                                        <h3>${comment.rname}</h3>
+                                        <div class="price">网付价<em>￥</em><strong>${comment.price}</strong><em>起</em></div>
+                                    </div>
+                                </a>
+                            </div>`;
+                            $(favoriteCount).appendTo($("#favorite_list"));
+                        }
+                    } else {
+                        location.href = "login.html";
+                    }
+
+                    //页码
+                    var currentPage = result.routePageBean.currentPage;
+                    var pageBegin = currentPage - 5;
+                    if (pageBegin <= 0) {
+                        pageBegin = 1;
+                    }
+                    var pageEnd = pageBegin + 9;
+                    pageEnd = pageEnd > result.routePageBean.pageCount ? result.routePageBean.pageCount : pageEnd;
+
+                    for (var idx = pageBegin; idx <= pageEnd; idx++) {
+                        var pageNum = `<li class="pagSelect"><a href="myfavorite.html?currentPage=${idx}">${idx}</a></li>`;
+                        $(pageNum).insertBefore($("#nextPage"));
+                    }
+
+                    //当前页颜色
+                    $(".pagSelect").eq(currentPage % 10 - 1).addClass("selectColor").siblings().removeClass("selectColor");
+
+                    //页码点击
+                    function changePage(element, target) {
+                        element.on("click", function () {
+                            $(this).attr("href", "myfavorite.html?currentPage=" + target);
+                        });
+                    }
+
+                    var beforePageNum = (currentPage - 1) <= 0 ? 1 : (currentPage - 1);
+                    var nextPageNum = (currentPage + 1) > result.routePageBean.pageCount ? result.routePageBean.pageCount : (currentPage + 1);
+
+                    console.log(result.routePageBean.pageCount);
+                    changePage($("#firstPage a"), 1);
+                    changePage($("#lastPage a"), result.routePageBean.pageCount);
+                    changePage($("#nextPage a"), nextPageNum);
+                    changePage($("#beforePage a"), beforePageNum);
+
+                }
+            })
+        })
+    </script>
+</head>
+
+<body>
+<!--引入头部-->
+<div id="header"></div>
+<!-- 排行榜 start-->
+<section id="content">
+    <section class="hemai_jx">
+        <div class="jx_top">
+            <div class="jx_tit">
+                <img src="images/icon_5.jpg" alt="">
+                <span>我的收藏</span>
+            </div>
+        </div>
+        <div class="jx_content">
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="home">
+                    <div class="row" id="favorite_list">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pageNum">
+            <ul>
+                <li id="firstPage"><a href="">首页</a></li>
+                <li class="threeword" id="beforePage"><a href="#">上一页</a></li>
+
+                <li class="threeword" id="nextPage"><a href="javascript:;">下一页</a></li>
+                <li class="threeword" id="lastPage"><a href="javascript:;">末页</a></li>
+            </ul>
+        </div>
+    </section>
+</section>
+<!-- 排行榜 end-->
+
+<!--引入尾部-->
+<div id="footer"></div>
+</body>
+
+</html>
