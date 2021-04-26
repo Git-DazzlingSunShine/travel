@@ -25,7 +25,7 @@
         <servlet.version>4.0.1</servlet.version>
         <mysql.connector.version>5.1.42</mysql.connector.version>
         <beanutils.version>1.9.3</beanutils.version>
-        <commons.io.version>2.6</commons.io.version>
+        <commons.io.version>2.7</commons.io.version>
         <spring.jdbc.version>5.1.9.RELEASE</spring.jdbc.version>
         <jackson.databing.version>2.9.9.3</jackson.databing.version>
         <redis.clients.version>3.1.0</redis.clients.version>
